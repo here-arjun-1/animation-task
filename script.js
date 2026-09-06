@@ -32,13 +32,13 @@ let keys = {
 
 window.addEventListener("keydown", function(event){
     if(event.key in keys){
-        key[event.key] = true;
+        keys[event.key] = true;
     }
 })
 
 window.addEventListener("keyup", function(event){
     if(event.key in keys){
-        key[event.key] = false;
+        keys[event.key] = false;
     }
 })
 
@@ -77,8 +77,8 @@ function Bullet(x, y, dx, dy){
     }
 
     this.update = function(){
-        this.dx = this.dx + this.speed;
-        this.dy = this.dy + this.speed;
+        this.x += this.dx * this.speed;
+        this.y += this.dy * this.speed;
         this.draw();
     };
 }
@@ -114,8 +114,8 @@ function Coin(x, y){
 }
 
 function createCoin(){
-    let x = Math.random(canvas.width - 300)+100;
-    let y = Math.random(canvas.height - 100)+50;
+    let x = Math.random()*(canvas.width - 300)+100;
+    let y = Math.random()*(canvas.height - 100)+50;
 
     coins.push(new Coin(x,y));
 }
@@ -155,3 +155,171 @@ function movePlayer(){
         player.y = canvas.height - player.radius;
     }
 }
+
+function drawPlayer(){
+    c.beginPath();
+    c.arc(player.x, player.y, player.radius,0, Math.PI*2);
+    c.fillStyle = player.color;
+    c.shadowBlur = 20;
+    c.shadowColor = "cyan";
+    c.fill();
+    c.shadowBlur = 0;
+}
+
+function cannonUpdate(){
+    let dx = player.x- cannon.x;
+    let dy = player.y-cannon.y;
+    cannon.angle = Math.atan2(dy,dx);
+}
+
+function drawCannon(){
+    c.beginPath();
+    c.arc(cannon.x, cannon.y, cannon.radius, 0 ,Math.PI*2);
+    c.fillStyle = "red";
+    c.shadowBlur = 20;
+    c.shadowColor = "red";
+    c.fill();
+    c.shadowBlur = 0;
+
+    c.save();
+    
+    c.translate(cannon.x, cannon.y);
+    c.rotate(cannon.angle);
+
+    c.fillStyle = "darkred";
+    c.fillRect(0, -8, 50, 16);
+
+    c.restore();
+
+    c.beginPath();
+     c.arc(cannon.x, cannon.y, 12, 0, Math.PI * 2);
+    c.fillStyle = "black";
+    c.fill();
+}
+
+function fireBullet(){
+    let dx = player.x - cannon.x;
+    let dy = player.y - cannon.y;
+    let angle = Math.atan2(dy, dx);
+
+    let bulletDx = Math.cos(angle);
+    let bulletDy = Math.sin(angle);
+
+    bullets.push(new Bullet(cannon.x, cannon.y, bulletDx, bulletDy));
+}
+
+function randomFire(){
+    if(gameState === "playing"){
+        fireBullet();
+    }
+
+    let nextTime = Math.random()*500 +100;
+
+    setTimeout(randomFire, nextTime);
+}
+
+function checkCoin(){
+    for(let i=coins.length-1; i >= 0; i--){
+        let coin = coins[i];
+        let dx = player.x -coin.x;
+        let dy = player.y -coin.y;
+        let d = Math.sqrt(dx*dx + dy*dy);
+        if(d < player.radius + coin.radius){
+            coins.splice(i,1);
+            collectCoins++;
+
+            createCoin();
+
+            if(collectCoins >= targetCoins){
+                gameState = "win";
+            }
+        }
+    }
+}
+
+function checkBulltetCollision(){
+    for(let i=bullets.length-1; i>=0; i--){
+        let bullet = bullets[i];
+
+        let dx = player.x - bullet.x;
+        let dy = player.y - bullet.y;
+
+        let d = Math.sqrt(dx*dx + dy*dy);
+
+        if(d < bullet.radius + player.radius){
+            gameState = "gameover";
+        }
+    }
+}
+
+function drawCoin(){
+    for(let i=0; i<coins.length; i++){
+        coins[i].draw();
+    }
+}
+
+function drawScore(){
+    c.fillStyle = "white";
+    c.font = "30px Arial"
+
+    c.fillText("coins: "+ collectCoins + "/" + targetCoins, 20,35);
+}
+
+function drawMessage(){
+    c.textAlign = "center";
+
+    if(gameState === "gameover"){
+        c.fillStyle = "red";
+        c.font ="60px Arial";
+
+        c.fillText("GAME OVER", canvas.width/3, canvas.height/2);
+        c.fillStyle = "white";
+        c.font = "20px Arial";
+
+        c.fillText("You collected " + collectCoins + " / " + targetCoins + " coins", canvas.width/2, canvas.height/2);
+    }
+
+    if(gameState === "win"){
+        c.fillStyle = "lime";
+        c.font = "60px Arial";
+        c.fillText("YOU WIN!", canvas.width/2, canvas.height/2);
+
+        c.fillStyle = "white";
+        c.font = "22px Arial";
+        c.fillText("You collected all "+targetCoins+" coins!", canvas.width / 2, canvas.height / 2 + 45);
+
+    };
+    c.textAlign = "left";
+}
+
+function animate(){
+    requestAnimationFrame(animate);
+    c.fillStyle="#111";
+    c.fillRect(0,0,canvas.width,canvas.height);
+
+    if(gameState === "playing"){
+        movePlayer();
+        cannonUpdate();
+
+        for(let i=bullets.length-1; i>=0; i--){
+            bullets[i].update();
+            if(bullets[i].x < -50 || bullets[i].x > canvas.width + 50 || bullets[i].y < -50 || bullets[i].y > canvas.height + 50){
+            bullets.splice(i,1);
+            }
+        }
+        checkBulltetCollision();
+        checkCoin();
+    }
+    
+
+    drawCoin();
+    drawPlayer();
+    drawCannon();
+    drawScore();
+    drawMessage();
+}
+
+randomFire();
+animate();
+
+window.addEventListener("resize",function(){canvas.width =window.innerWidth; canvas.height = window.innerHeight; cannon.x =canvas.width - 100; cannon.y = canvas.height / 2;});
