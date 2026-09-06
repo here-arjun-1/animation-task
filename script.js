@@ -3,136 +3,155 @@ const canvas = document.querySelector("canvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let c = canvas.getContext('2d');
+const c = canvas.getContext('2d');
 
-let hindiName = "अर्जुन";
-let englishName = "Arjun";
+let gameState = "playing";
+let targetCoins = Math.ceil((Math.random()*10)+1)+5;
 
-let currentName = hindiName;
+let collectCoins = 0;
 
-let arrow = {x:50, y:canvas.height/2, speed:15, direction:1, length: 100};
+let player = {
+    x: 100,
+    y: canvas.height/2,
+    radius: 20,
+    speed: 5,
+    color: "cyan"
+};
 
-let nameX = canvas.width/2;
-let nameY = canvas.height/2;
+let keys = {
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false,
 
-let lastNameSet = "hindi";
+    w: false,
+    a: false,
+    s: false,
+    d: false
+};
 
-function drawName(){
-    c.font = "bold 100px Calligrapher";
-    c.textAlign = "center";
-    c.textBaseline = "middle";
-    c.fillStyle = "white";
-    c.fillText(currentName, nameX, nameY);
-}
-
-
-//draw arrow
-function drawArrow(){
-    c.strokeStyle = "white";
-    c.fillStyle = "white";
-
-    c.lineWidth = 5;
-    c.beginPath();
-    
-    if(arrow.direction == 1){
-        c.moveTo(arrow.x - arrow.length, arrow.y);
-        c.lineTo(arrow.x, arrow.y);
-    }else{
-        c.moveTo(arrow.x + arrow.length, arrow.y);
-        c.lineTo(arrow.x, arrow.y);
+window.addEventListener("keydown", function(event){
+    if(event.key in keys){
+        key[event.key] = true;
     }
+})
 
-    c.stroke();
-
-    c.beginPath();
-    if(arrow.direction == 1){
-        c.moveTo(arrow.x, arrow.y);
-        c.lineTo(arrow.x - 20, arrow.y - 15);
-        c.lineTo(arrow.x - 20,arrow.y + 15);
-    }else{
-        c.moveTo(arrow.x,arrow.y);
-        c.lineTo(arrow.x + 20,arrow.y - 15);
-        c.lineTo(arrow.x + 20,arrow.y + 15);
+window.addEventListener("keyup", function(event){
+    if(event.key in keys){
+        key[event.key] = false;
     }
-    c.closePath();
-    c.fill();
+})
 
-}
+let cannon = {
+    x : canvas.width - 100,
+    y : canvas.height/2,
+    radius : 35,
+    angle : Math.PI
+};
 
-//waves area
-let waves = [];
+let bullets = [];
+let coins = [];
 
-function createWave(){
-    wave.push({x:nameX, y:nameY, radius:10, alpha:1})
-}
-function drawWaves(){
+function Bullet(x, y, dx, dy){
+    this.x = x;
+    this.y = y;
+    this.dx = dx;
+    this.dy = dy;
+    this.radius = 7;
+    this.speed = 6;
 
-    for(let i=waves.length - 1; i >= 0; i--){
-        let wave = waves[i];
+    this.draw = function(){
         c.beginPath();
-        c.arc(wave.x,wave.y,wave.radius,0,Math.PI * 2);
-
-        c.strokeStyle =`rgba(255,255,255,${wave.alpha})`;
-        c.lineWidth = 3;
-        c.stroke();
-        wave.radius += 3;
-        wave.alpha -= 0.02;
-        if(wave.alpha <= 0){
-            waves.splice(i,1);
-        }
+        c.arc(
+            this.x,
+            this.y,
+            this.radius,
+            0, 
+            Math.PI*2
+        );
+        c.fillStyle = "orange";
+        c.shadowBlur = 15;
+        c.shadowColor = "orange";
+        c.fill();
+        c.shadowBlur = 0;
     }
+
+    this.update = function(){
+        this.dx = this.dx + this.speed;
+        this.dy = this.dy + this.speed;
+        this.draw();
+    };
 }
 
+function Coin(x, y){
+    this.x = x;
+    this.y = y;
+    this.radius = 12;
+    this.angle = 0;
 
+    this.draw = function(){
+        this.angle += 0.5;
 
-function checkCrossing(){
-    const nameWidth = c.measureText(currentName).width;
-    const left = nameX - nameWidth/2;
-    const right = nameX + nameWidth/2;
+        c.beginPath();
+        c.arc(
+            this.x, this.y, this.radius, 0, Math.PI*2, false
+        );
 
-    if(arrow.direction === 1 && arrow.x >= left && arrow.x <= right){
-        if(lastNameSet === "hindi"){
-            currentName = englishName;
-            lastNameSet = "english";
-            createWave();
-            createWave();
-        }
-    }
+        c.fillStyle = "gold";
+        c.shadowBlur = 15;
+        c.shadowColor = "gold";
+        c.fill();
+        c.shadowBlur = 0;
 
-    if(arrow.direction === -1 && arrow.x <= right && arrow.x >= left){
-        if(lastNameSet === "english"){
-            currentName = hindiName;
-            lastNameSet = "hindi";
-            createWave();
-            createWave();
-        }
-    }
+        c.beginPath();
+        c.arc(
+            this.x, this.y, 5, 0, Math.PI * 2
+        );
+
+        c.fillStyle = "#b8860b";
+        c.fill();
+    };
 }
 
-function updateArrow(){
-    arrow.x += arrow.speed * arrow.direction;
+function createCoin(){
+    let x = Math.random(canvas.width - 300)+100;
+    let y = Math.random(canvas.height - 100)+50;
 
-    if (arrow.direction === 1 && arrow.x >= canvas.width - 30){
-        arrow.direction = -1;
-    }
-    if(arrow.direction === -1 && arrow.x <= 30){
-        arrow.direction = 1;
-    }
+    coins.push(new Coin(x,y));
 }
 
-function animate(){
-    requestAnimationFrame(animate);
-    c.clearRect(0, 0, canvas.width, canvas.height);
-    updateArrow();
-    checkCrossing();
-    drawWaves();
-    drawName();
-    drawArrow();
+createCoin();
+
+function movePlayer(){
+    if(keys.ArrowUp || keys.w){
+        player.y -= player.speed;
+    }
+
+    if(keys.ArrowDown || keys.s){
+        player.y += player.speed;
+    }
+
+    if(keys.ArrowLeft || keys.a){
+        player.x -= player.speed;
+    }
+
+    if(keys.ArrowRight || keys.d){
+        player.x += player.speed;
+    }
+
+    if(player.x - player.radius < 0){
+        player.x = player.radius;
+    }
+
+    if(player.x + player.radius > canvas.width){
+        player.x = canvas.width - player.radius;
+    }
+
+    if(player.y - player.radius < 0){
+        player.y = player.radius;
+    }
+
+    if(player.y + player.radius > canvas.height){
+        player.y = canvas.height - player.radius;
+    }
 }
-animate();
-window.addEventListener("resize", function(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    nameX = canvas.width / 2;
-    nameY = canvas.height / 2;
-});
