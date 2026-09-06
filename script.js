@@ -272,11 +272,11 @@ function drawMessage(){
         c.fillStyle = "red";
         c.font ="60px Arial";
 
-        c.fillText("GAME OVER", canvas.width/3, canvas.height/2);
+        c.fillText("GAME OVER", canvas.width/2, canvas.height/2);
         c.fillStyle = "white";
         c.font = "20px Arial";
 
-        c.fillText("You collected " + collectCoins + " / " + targetCoins + " coins", canvas.width/2, canvas.height/2);
+        c.fillText("You collected " + collectCoins + " / " + targetCoins + " coins", canvas.width/2, canvas.height/2 + 50);
     }
 
     if(gameState === "win"){
@@ -286,7 +286,7 @@ function drawMessage(){
 
         c.fillStyle = "white";
         c.font = "22px Arial";
-        c.fillText("You collected all "+targetCoins+" coins!", canvas.width / 2, canvas.height / 2 + 45);
+        c.fillText("You collected all "+targetCoins+" coins!", canvas.width / 2, canvas.height / 2 + 30);
 
     };
     c.textAlign = "left";
