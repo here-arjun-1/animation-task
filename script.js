@@ -1,3 +1,4 @@
+alert("ENTERED THE ARENA")
 const canvas = document.querySelector("canvas");
 
 canvas.width = window.innerWidth;
@@ -9,6 +10,8 @@ let gameState = "playing";
 let targetCoins = Math.ceil((Math.random()*10)+1)+5;
 
 let collectCoins = 0;
+
+let restartBtn = document.getElementById("restartBtn");
 
 let player = {
     x: 100,
@@ -292,6 +295,18 @@ function drawMessage(){
     c.textAlign = "left";
 }
 
+function restartGame(){
+    gameState = "playing";
+    collectCoins = 0;
+    targetCoins = Math.ceil((Math.random() * 10) + 1) + 5;
+    player.x = 100;
+    player.y = canvas.height / 2;
+    bullets = [];
+    coins = [];
+    createCoin();
+}
+
+restartBtn.addEventListener("click", restartGame);
 function animate(){
     requestAnimationFrame(animate);
     c.fillStyle="#111";
